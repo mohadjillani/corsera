@@ -1,40 +1,79 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 
+const mongoose =require('mongoose');
+const Leaders =require('../models/leaders');
+
 const leaderRouter = express.Router();
 leaderRouter.use(bodyParser.json());
 
 leaderRouter.route('/')
-.all((req,res,next)=>{
-    res.statusCode=200;
-    res.setHeader('Content-Type','text/plain');
-    next();
-})
 .get((req,res,next)=>{
-    res.end('will send all the leaders to you');
+   Leaders.find({}).then((leaders)=>{
+       res.statusCode=200;
+       res.setHeader("Content-Type","application/json");
+       res.json(leaders);
+   },(err)=>next(err))
+   .catch((err)=>next(err))
 })
 .post((req,res,next)=>{
-    res.end('will post your leaders with name : '+ req.body.name +' and details : '+req.body.details);
+    Leaders.create(req.body)
+    .then((leader)=>{
+        res.statusCode=200;
+        res.setHeader("Content-Type","application/json");
+        res.json(leader);
+    },(err)=>next(err))
+    .catch((err)=>next(err));
 })
 .put((req,res,next)=>{
     res.statusCode=403;
-    res.end('not supported yet');
+    res.end('put method is not supported');
 })
 .delete((req,res,next)=>{
-    res.end('deleting all leaders');
+    Leaders.remove({})
+    .then((leaders)=>{
+        res.statusCode=200;
+        res.setHeader("Content-Type","application/json");
+        res.json(leaders);
+    },(err)=>next(err))
+    .catch((err)=>next(err));
 });
 
 
 leaderRouter.route('/:leaderID')
 .get((req,res,next)=>{
-    res.end('will send all the leader number : '+req.params.leaderID);
+    Leaders.findById(req.params.leaderID)
+    .then((leader)=>{
+       if(leader){
+        res.statusCode=200;
+        res.setHeader("Content-Type","application/json");
+        res.json(leader);
+       }
+       else{
+           res.statusCode=404;
+           res.end("leader not found");
+       }
+    },(err)=>next(err))
+    .catch((err)=>next(err));
 }).post((req,res,next)=>{
     res.statusCode=403;
     res.end('post operation is not supported');
 }).put((req,res,next)=>{
-    res.end('updating leader :'+ req.params.leaderID);
+    Leaders.findByIdAndUpdate(req.params.leaderID,
+        {$set:req.body},
+        {new:true})
+        .then((leader)=>{
+            res.statusCode=200;
+            res.setHeader("Content-Type","application/json");
+            res.json(leader);
+        })
 }).delete((req,res,next)=>{
-    res.end('deleting leader :'+req.params.leaderID);
+    Leaders.findByIdAndDelete(req.params.leaderID)
+    .then((leader)=>{
+        res.statusCode=200;
+        res.setHeader("Content-Type","application/json");
+        res.json(leader);
+    })
 }); 
 
 
